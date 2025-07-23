@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { toast } from "react-toastify";
+import Error from "@/components/ui/Error";
 
 // AI Service for handling different providers
 class AIService {
@@ -154,6 +155,7 @@ const useWebsiteGenerator = () => {
       };
 
       // Step 1: Initialize
+// Step 1: Initialize
       updateProgress(generationSteps[currentStep++]);
       
       // Step 2: Generate HTML files with AI enhancement
@@ -163,8 +165,9 @@ const useWebsiteGenerator = () => {
       currentStep++;
 
       // Step 3: Generate service pages
+      let serviceFiles = [];
       if (config.pageType === "multi" && services.length > 0) {
-updateProgress(generationSteps[currentStep++]);
+        updateProgress(generationSteps[currentStep++]);
         serviceFiles = await generateServicePages(businessInfo, services, config, aiService);
         updateProgress(generationSteps[currentStep], serviceFiles);
       } else {
@@ -172,14 +175,15 @@ updateProgress(generationSteps[currentStep++]);
       }
 
       // Step 4: Generate area pages
+      let areaFiles = [];
       if (config.pageType === "multi" && areas.length > 0) {
-updateProgress(generationSteps[currentStep++]);
+        updateProgress(generationSteps[currentStep++]);
         areaFiles = await generateAreaPages(businessInfo, areas, config, aiService);
         updateProgress(generationSteps[currentStep], areaFiles);
       } else {
         currentStep++;
       }
-
+      
       // Step 5: Generate SEO files
       updateProgress(generationSteps[currentStep++]);
       const seoFiles = await generateSEOFiles(businessInfo, services, areas);
@@ -192,9 +196,9 @@ updateProgress(generationSteps[currentStep++]);
       updateProgress(generationSteps[currentStep], assetFiles);
       currentStep++;
 
-// Step 7: Create ZIP package
+      // Step 7: Create ZIP package
       updateProgress(generationSteps[currentStep++]);
-      const allFiles = [...htmlFiles, ...(serviceFiles || []), ...(areaFiles || []), ...seoFiles, ...assetFiles];
+      const allFiles = [...htmlFiles, ...serviceFiles, ...areaFiles, ...seoFiles, ...assetFiles];
       const zipBlob = await createZipPackage(allFiles);
       
       // Trigger download
@@ -212,7 +216,6 @@ updateProgress(generationSteps[currentStep++]);
       console.error("Website generation failed:", error);
       throw error;
     }
-  }, []);
 
   const generateHTMLFiles = async (businessInfo, services, areas, config, aiService) => {
     // Generate enhanced content using AI
