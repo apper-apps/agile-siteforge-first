@@ -178,10 +178,8 @@ async callTogetherAPI(prompt, type) {
         throw new Error('Network error connecting to Together AI API. Please check your internet connection.');
       }
       throw error;
-    }
 }
   }
-}
 }
 
 // Helper functions for website generation (moved outside hook)
