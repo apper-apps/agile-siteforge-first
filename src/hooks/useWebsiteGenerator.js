@@ -30,8 +30,8 @@ class AIService {
     }
   }
 
-  async callGeminiAPI(prompt, type) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.apiKey}`, {
+async callGeminiAPI(prompt, type) {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,7 +53,14 @@ class AIService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `Gemini API error: ${response.status}`);
+      const errorMessage = errorData.error?.message || `Gemini API error: ${response.status}`;
+      
+      // Check for specific model availability errors
+      if (errorMessage.includes('not found') || errorMessage.includes('not supported')) {
+        throw new Error(`Gemini model not available. Please check if gemini-1.5-flash is supported in your region or try updating your API key. Original error: ${errorMessage}`);
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
