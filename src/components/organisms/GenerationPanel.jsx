@@ -29,57 +29,37 @@ const GenerationPanel = ({
     "Creating downloadable package..."
   ];
 
-  const handleGenerate = async () => {
+const handleGenerate = async () => {
     try {
       setIsGenerating(true);
       setProgress(0);
       setGeneratedFiles([]);
       setDownloadUrl(null);
 
-      // Simulate generation process
-      for (let i = 0; i < generationSteps.length; i++) {
-        setCurrentStep(generationSteps[i]);
-        setProgress(((i + 1) / generationSteps.length) * 100);
-        
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Add generated files based on step
-        if (i === 1) {
-          setGeneratedFiles(prev => [...prev, { name: "index.html", type: "html" }]);
-        } else if (i === 2) {
-          const serviceFiles = services.map(service => ({ 
-            name: `services/${service.slug}.html`, 
-            type: "html" 
-          }));
-          setGeneratedFiles(prev => [...prev, ...serviceFiles]);
-        } else if (i === 3) {
-          const areaFiles = areas.map(area => ({ 
-            name: `${config.areaPageSlug || "areas"}/${area.slug}.html`, 
-            type: "html" 
-          }));
-          setGeneratedFiles(prev => [...prev, ...areaFiles]);
-        } else if (i === 4) {
-          setGeneratedFiles(prev => [...prev, 
-            { name: "sitemap.xml", type: "xml" },
-            { name: "robots.txt", type: "txt" },
-            { name: "llm.txt", type: "txt" }
-          ]);
-        } else if (i === 5) {
-          setGeneratedFiles(prev => [...prev,
-            { name: "main.js", type: "js" },
-            { name: "custom.css", type: "css" },
-            { name: ".htaccess", type: "txt" }
-          ]);
-        }
+      // Real AI-powered generation process
+      if (onGenerate) {
+        await onGenerate({
+          businessInfo,
+          services,
+          areas,
+          config,
+          onProgress: (progress, step, files) => {
+            setProgress(progress);
+            setCurrentStep(step);
+            if (files) {
+              setGeneratedFiles(prev => [...prev, ...files]);
+            }
+          }
+        });
       }
 
-      // Generate mock download URL
+      // Create download URL for the generated package
       setDownloadUrl(`${businessInfo.websiteSlug || "website"}.zip`);
       toast.success("Website generated successfully!");
       
     } catch (error) {
-      toast.error("Generation failed. Please try again.");
+      const errorMessage = error.message || "Generation failed. Please try again.";
+      toast.error(errorMessage);
       console.error("Generation error:", error);
     } finally {
       setIsGenerating(false);

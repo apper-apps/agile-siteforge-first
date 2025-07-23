@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import Header from "@/components/organisms/Header";
-import BusinessInfoForm from "@/components/organisms/BusinessInfoForm";
-import ServicesManager from "@/components/organisms/ServicesManager";
+import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
 import AreasManager from "@/components/organisms/AreasManager";
-import ConfigurationForm from "@/components/organisms/ConfigurationForm";
+import BusinessInfoForm from "@/components/organisms/BusinessInfoForm";
+import Header from "@/components/organisms/Header";
 import GenerationPanel from "@/components/organisms/GenerationPanel";
+import ServicesManager from "@/components/organisms/ServicesManager";
+import ConfigurationForm from "@/components/organisms/ConfigurationForm";
 import StepIndicator from "@/components/molecules/StepIndicator";
 import Button from "@/components/atoms/Button";
-import ApperIcon from "@/components/ApperIcon";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-toastify";
 
 const HomePage = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -109,9 +109,46 @@ const HomePage = () => {
   };
 
   const handlePrevious = () => {
+const handlePrevious = () => {
     setCurrentStep(prev => Math.max(prev - 1, 0));
   };
 
+  const generateWebsite = async (data) => {
+    try {
+      // Show loading state
+      toast.info("Generating your website...");
+      
+      // Here you would typically make an API call to generate the website
+      // For now, we'll simulate the process
+      console.log("Generating website with data:", {
+        businessInfo,
+        services,
+        areas,
+        config,
+        ...data
+      });
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Success message
+      toast.success("Website generated successfully!");
+      
+      return {
+        success: true,
+        message: "Website generated successfully"
+      };
+      
+    } catch (error) {
+      console.error("Website generation failed:", error);
+      toast.error("Failed to generate website. Please try again.");
+      
+      return {
+        success: false,
+        message: error.message || "Generation failed"
+      };
+    }
+  };
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -144,13 +181,14 @@ const HomePage = () => {
             errors={errors}
           />
         );
-      case 4:
+case 4:
         return (
           <GenerationPanel
             businessInfo={businessInfo}
             services={services}
             areas={areas}
             config={config}
+            onGenerate={generateWebsite}
           />
         );
       default:
