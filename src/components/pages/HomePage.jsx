@@ -10,6 +10,7 @@ import ServicesManager from "@/components/organisms/ServicesManager";
 import ConfigurationForm from "@/components/organisms/ConfigurationForm";
 import StepIndicator from "@/components/molecules/StepIndicator";
 import Button from "@/components/atoms/Button";
+import useWebsiteGenerator from "@/hooks/useWebsiteGenerator";
 
 const HomePage = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -35,13 +36,13 @@ const HomePage = () => {
       secondary: "#8B5CF6",
       accent: "#10B981"
     },
-    aiModel: "openai",
+    aiModel: "gemini",
     apiKey: "",
     hosting: "netlify"
   });
 
   const [errors, setErrors] = useState({});
-
+  const { generateWebsite, isGenerating, error } = useWebsiteGenerator();
   const steps = [
     {
       id: "business",
@@ -112,42 +113,35 @@ const handlePrevious = () => {
     setCurrentStep(prev => Math.max(prev - 1, 0));
   };
 
-  const generateWebsite = async (data) => {
+const handleGenerate = async (onProgress) => {
     try {
-      // Show loading state
-      toast.info("Generating your website...");
-      
-      // Here you would typically make an API call to generate the website
-      // For now, we'll simulate the process
-      console.log("Generating website with data:", {
+      const zipBlob = await generateWebsite({
         businessInfo,
         services,
         areas,
         config,
-        ...data
+        onProgress
       });
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Success message
-      toast.success("Website generated successfully!");
-      
-      return {
-        success: true,
-        message: "Website generated successfully"
-      };
-      
+
+      // Create download link
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${businessInfo.websiteSlug || 'website'}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Website generated and downloaded successfully!");
+      return zipBlob;
     } catch (error) {
       console.error("Website generation failed:", error);
-      toast.error("Failed to generate website. Please try again.");
-      
-      return {
-        success: false,
-        message: error.message || "Generation failed"
-      };
+      toast.error(error.message || "Failed to generate website. Please try again.");
+      throw error;
     }
   };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -181,13 +175,15 @@ const handlePrevious = () => {
           />
         );
 case 4:
-        return (
+return (
           <GenerationPanel
             businessInfo={businessInfo}
             services={services}
             areas={areas}
             config={config}
-            onGenerate={generateWebsite}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+            error={error}
           />
         );
       default:

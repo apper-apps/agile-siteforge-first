@@ -11,7 +11,9 @@ const GenerationPanel = ({
   services, 
   areas, 
   config,
-  onGenerate 
+  onGenerate,
+  isGenerating: externalIsGenerating,
+  error: externalError
 }) => {
 const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -20,6 +22,10 @@ const [isGenerating, setIsGenerating] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [previewHtml, setPreviewHtml] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+
+  // Use external state if provided
+  const actualIsGenerating = externalIsGenerating !== undefined ? externalIsGenerating : isGenerating;
+  const actualError = externalError || null;
   const generationSteps = [
     "Initializing AI content generation...",
     "Generating homepage content...",
@@ -41,29 +47,70 @@ const handleGenerate = async () => {
 
       // Real AI-powered generation process
       if (onGenerate) {
-        await onGenerate({
-          businessInfo,
-          services,
-          areas,
-          config,
-          onProgress: (progress, step, files) => {
-            setProgress(progress);
-            setCurrentStep(step);
-            if (files) {
-              setGeneratedFiles(prev => [...prev, ...files]);
-              // Update preview with main HTML file
-              const htmlFile = files.find(file => file.name === 'index.html');
-              if (htmlFile) {
-                setPreviewHtml(htmlFile.content);
-              }
-            }
+        const zipBlob = await onGenerate((progress, step) => {
+          setProgress(progress);
+          setCurrentStep(step);
+          
+          // Simulate file creation for UI feedback
+          if (progress >= 20 && generatedFiles.length === 0) {
+            setGeneratedFiles([
+              { name: "index.html", type: "html" },
+              { name: "custom.css", type: "css" },
+              { name: "main.js", type: "js" }
+            ]);
+          }
+          
+          if (progress >= 60 && config.pageType === 'multi') {
+            setGeneratedFiles(prev => [
+              ...prev,
+              ...services.map(service => ({ name: `services/${service.slug}.html`, type: "html" })),
+              ...areas.map(area => ({ name: `service-areas/${area.slug}.html`, type: "html" }))
+            ]);
+          }
+          
+          if (progress >= 90) {
+            setGeneratedFiles(prev => [
+              ...prev,
+              { name: "sitemap.xml", type: "xml" },
+              { name: "robots.txt", type: "txt" },
+              { name: ".htaccess", type: "txt" }
+            ]);
           }
         });
-      }
 
-      // Create download URL for the generated package
-      setDownloadUrl(`${businessInfo.websiteSlug || "website"}.zip`);
-      toast.success("Website generated successfully!");
+        // Generate preview HTML for display
+        const mockPreviewHtml = `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${businessInfo.name} - ${businessInfo.niche}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, ${config.colors.primary}, ${config.colors.secondary}); color: white; }
+              .container { max-width: 800px; margin: 0 auto; text-align: center; }
+              h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+              p { font-size: 1.2rem; margin-bottom: 2rem; }
+              .services { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0; }
+              .service { background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 0.5rem; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>${businessInfo.name}</h1>
+              <p>${businessInfo.description}</p>
+              <div class="services">
+                ${services.map(service => `<div class="service"><h3>${service.name}</h3></div>`).join('')}
+              </div>
+              <p>📍 Serving ${areas.map(area => area.name).join(', ')}</p>
+              <p>📞 ${businessInfo.phone}</p>
+            </div>
+          </body>
+          </html>
+        `;
+        setPreviewHtml(mockPreviewHtml);
+        setDownloadUrl(`${businessInfo.websiteSlug || "website"}.zip`);
+      }
       
     } catch (error) {
       const errorMessage = error.message || "Generation failed. Please try again.";
@@ -154,13 +201,13 @@ return (
               </div>
             )}
 
-            <Button 
+<Button 
               onClick={handleGenerate}
-              disabled={!isReadyToGenerate || isGenerating}
+              disabled={!isReadyToGenerate || actualIsGenerating}
               className="w-full"
               size="lg"
             >
-              {isGenerating ? (
+              {actualIsGenerating ? (
                 <>
                   <ApperIcon name="Loader" size={20} className="mr-3 animate-spin" />
                   Generating Website...
@@ -174,8 +221,8 @@ return (
             </Button>
           </div>
 
-          <AnimatePresence>
-            {isGenerating && (
+<AnimatePresence>
+            {actualIsGenerating && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
@@ -303,17 +350,17 @@ return (
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                    <div className="text-center text-gray-500">
+<div className="text-center text-gray-500">
                       <ApperIcon name="Monitor" size={48} className="mx-auto mb-3 opacity-50" />
                       <p className="text-sm">
-                        {isGenerating ? "Generating preview..." : "Preview will appear here"}
+                        {actualIsGenerating ? "Generating preview..." : "Preview will appear here"}
                       </p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {isGenerating && (
+              {actualIsGenerating && (
                 <div className="mt-4 text-center">
                   <div className="inline-flex items-center gap-2 text-sm text-gray-400">
                     <ApperIcon name="Loader" size={14} className="animate-spin" />
