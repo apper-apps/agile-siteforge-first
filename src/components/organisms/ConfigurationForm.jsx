@@ -62,15 +62,24 @@ const ConfigurationForm = ({
         </FormField>
       </div>
       
-      <FormField
+<FormField
         label="AI API Key"
         required
         type="password"
-        value={config.apiKey}
+        value={config.apiKey || ''}
         onChange={(e) => handleChange("apiKey", e.target.value)}
-        placeholder="Enter your API key..."
+        placeholder={getAPIKeyPlaceholder(config.aiModel)}
         error={errors.apiKey}
       />
+      
+      <div className="mt-2 p-3 bg-blue-900/20 border border-blue-700/30 rounded-lg">
+        <p className="text-sm text-blue-300 mb-1">
+          <strong>API Key Format for {getModelDisplayName(config.aiModel)}:</strong>
+        </p>
+        <p className="text-xs text-blue-400">
+          {getAPIKeyFormat(config.aiModel)}
+        </p>
+      </div>
       
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-100">Brand Colors</h3>
@@ -108,8 +117,44 @@ const ConfigurationForm = ({
           <p className="text-xs text-gray-500 mt-1">Includes _redirects, headers, and build optimization</p>
         </div>
       </div>
-    </motion.div>
+</motion.div>
   );
+};
+
+const getAPIKeyPlaceholder = (aiModel) => {
+  const placeholders = {
+    openai: 'sk-...',
+    claude: 'sk-ant-api03-...',
+    gemini: 'AIza...',
+    openrouter: 'sk-or-v1-...',
+    together: 'together-api-key...',
+    llama: 'hf_...'
+  };
+  return placeholders[aiModel] || 'Enter your API key...';
+};
+
+const getModelDisplayName = (aiModel) => {
+  const names = {
+    openai: 'OpenAI GPT',
+    claude: 'Anthropic Claude',
+    gemini: 'Google Gemini',
+    openrouter: 'OpenRouter',
+    together: 'Together AI',
+    llama: 'Llama (Hugging Face)'
+  };
+  return names[aiModel] || aiModel.toUpperCase();
+};
+
+const getAPIKeyFormat = (aiModel) => {
+  const formats = {
+    openai: 'Starts with "sk-" followed by your OpenAI API key',
+    claude: 'Starts with "sk-ant-api03-" from Anthropic Console',
+    gemini: 'Starts with "AIza" from Google AI Studio',
+    openrouter: 'Starts with "sk-or-v1-" from OpenRouter Dashboard',
+    together: 'Your Together AI API key from the dashboard',
+    llama: 'Hugging Face API token starting with "hf_"'
+  };
+  return formats[aiModel] || 'Check your AI provider documentation for the correct format';
 };
 
 export default ConfigurationForm;

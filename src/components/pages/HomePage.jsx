@@ -94,8 +94,16 @@ const HomePage = () => {
         }
         break;
         
-      case 3: // Configuration
-        if (!config.apiKey) newErrors.apiKey = "API key is required";
+case 3: // Configuration
+        if (!config.apiKey?.trim()) {
+          newErrors.apiKey = "API key is required";
+        } else {
+          // Validate API key format based on selected model
+          const isValidKey = validateAPIKey(config.aiModel, config.apiKey);
+          if (!isValidKey) {
+            newErrors.apiKey = `Invalid API key format for ${config.aiModel}`;
+          }
+        }
         break;
     }
     
@@ -317,6 +325,24 @@ return (
       </div>
     </div>
   );
+};
+
+const validateAPIKey = (aiModel, apiKey) => {
+  if (!apiKey || !apiKey.trim()) return false;
+  
+  const validationPatterns = {
+    openai: /^sk-[a-zA-Z0-9]{48}$/,
+    claude: /^sk-ant-api03-/,
+    gemini: /^AIza[a-zA-Z0-9_-]{35}$/,
+    openrouter: /^sk-or-v1-/,
+    together: /^[a-f0-9]{64}$/,
+    llama: /^hf_[a-zA-Z0-9]{34}$/
+  };
+  
+  const pattern = validationPatterns[aiModel];
+  if (!pattern) return true; // Allow unknown models
+  
+  return pattern.test(apiKey.trim());
 };
 
 export default HomePage;
