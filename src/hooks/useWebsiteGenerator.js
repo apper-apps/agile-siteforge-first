@@ -1,8 +1,8 @@
-import React, { useCallback, useState } from "react";
-import { toast } from "react-toastify";
-import Error from "@/components/ui/Error";
+import React, { useCallback, useState } from 'react'
+import { toast } from 'react-toastify'
+import ErrorComponent from '@/components/ui/Error'
 
-// AI Service for handling different providers
+// AI Service class to handle different AI providers
 class AIService {
   constructor(config) {
     this.config = config;

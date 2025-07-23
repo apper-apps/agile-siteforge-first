@@ -6,7 +6,7 @@ import ApperIcon from "@/components/ApperIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 
-const GenerationPanel = ({ 
+const GenerationPanel = ({
   businessInfo, 
   services, 
   areas, 
