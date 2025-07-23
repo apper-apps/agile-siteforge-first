@@ -45,7 +45,7 @@ const ConfigurationForm = ({
           <option value="multi">Multi Page</option>
         </FormField>
         
-        <FormField
+<FormField
           label="AI Model"
           required
           type="select"
@@ -56,6 +56,9 @@ const ConfigurationForm = ({
           <option value="openai">OpenAI GPT</option>
           <option value="claude">Anthropic Claude</option>
           <option value="llama">Llama 3.1.8</option>
+          <option value="gemini">Google Gemini</option>
+          <option value="openrouter">OpenRouter API</option>
+          <option value="together">Together AI</option>
         </FormField>
       </div>
       
