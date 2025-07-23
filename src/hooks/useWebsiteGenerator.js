@@ -147,72 +147,62 @@ const useWebsiteGenerator = () => {
         "Generating sitemap and SEO files...",
         "Compiling assets and scripts...",
         "Creating downloadable package..."
-      ];
+};
 
-      let currentStep = 0;
-      const updateProgress = (step, files) => {
-        onProgress(((currentStep + 1) / generationSteps.length) * 100, step, files);
-      };
+    const generateWebsite = useCallback(async (businessInfo, services, areas, config, onProgress) => {
+      try {
+        setIsGenerating(true);
+        setError(null);
 
-      // Step 1: Initialize
-// Step 1: Initialize
-      updateProgress(generationSteps[currentStep++]);
-      
-      // Step 2: Generate HTML files with AI enhancement
-      updateProgress(generationSteps[currentStep++]);
-      const htmlFiles = await generateHTMLFiles(businessInfo, services, areas, config, aiService);
-      updateProgress(generationSteps[currentStep], htmlFiles);
-      currentStep++;
-
-      // Step 3: Generate service pages
-      let serviceFiles = [];
-      if (config.pageType === "multi" && services.length > 0) {
-        updateProgress(generationSteps[currentStep++]);
-        serviceFiles = await generateServicePages(businessInfo, services, config, aiService);
-        updateProgress(generationSteps[currentStep], serviceFiles);
-      } else {
-        currentStep++;
+        onProgress(0, "Initializing AI content generation...");
+        
+        // Initialize AI service
+        const aiService = new AIService(config.aiProvider, config.apiKey);
+        
+        // Step 2: Generate main HTML files
+        onProgress(20, "Generating homepage content...");
+        const htmlFiles = await generateHTMLFiles(businessInfo, services, areas, config, aiService);
+        
+        // Step 3: Generate service pages (if multi-page)
+        let serviceFiles = [];
+        if (config.pageType === 'multi' && services.length > 0) {
+          onProgress(40, "Creating service pages...");
+          serviceFiles = await generateServicePages(businessInfo, services, config, aiService);
+        }
+        
+        // Step 4: Generate area pages (if multi-page and areas exist)
+        let areaFiles = [];
+        if (config.pageType === 'multi' && areas.length > 0) {
+          onProgress(60, "Creating service area pages...");
+          areaFiles = await generateAreaPages(businessInfo, areas, config, aiService);
+        }
+        
+        // Step 5: Generate asset files
+        onProgress(80, "Adding styles and scripts...");
+        const assetFiles = await generateAssetFiles(config);
+        
+        // Step 6: Generate SEO files
+        onProgress(90, "Optimizing for search engines...");
+        const seoFiles = await generateSEOFiles(businessInfo, services, areas);
+        
+        // Step 7: Create ZIP package
+        onProgress(95, "Packaging website files...");
+        const allFiles = [...htmlFiles, ...serviceFiles, ...areaFiles, ...assetFiles, ...seoFiles];
+        const zipBlob = await createZipPackage(allFiles);
+        
+        onProgress(100, "Website generated successfully!");
+        
+        setIsGenerating(false);
+        return zipBlob;
+        
+      } catch (error) {
+        console.error("Website generation failed:", error);
+        setError(error.message || 'Website generation failed');
+        setIsGenerating(false);
+        throw error;
       }
 
-      // Step 4: Generate area pages
-      let areaFiles = [];
-      if (config.pageType === "multi" && areas.length > 0) {
-        updateProgress(generationSteps[currentStep++]);
-        areaFiles = await generateAreaPages(businessInfo, areas, config, aiService);
-        updateProgress(generationSteps[currentStep], areaFiles);
-      } else {
-        currentStep++;
-      }
-      
-      // Step 5: Generate SEO files
-      updateProgress(generationSteps[currentStep++]);
-      const seoFiles = await generateSEOFiles(businessInfo, services, areas);
-      updateProgress(generationSteps[currentStep], seoFiles);
-      currentStep++;
-
-      // Step 6: Generate assets
-      updateProgress(generationSteps[currentStep++]);
-      const assetFiles = await generateAssetFiles(config);
-      updateProgress(generationSteps[currentStep], assetFiles);
-      currentStep++;
-
-      // Step 7: Create ZIP package
-      updateProgress(generationSteps[currentStep++]);
-      const allFiles = [...htmlFiles, ...serviceFiles, ...areaFiles, ...seoFiles, ...assetFiles];
-      const zipBlob = await createZipPackage(allFiles);
-      
-      // Trigger download
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${businessInfo.websiteSlug || "website"}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      return zipBlob;
-// Helper functions properly scoped within generateWebsite
+      // Helper functions for website generation
       const generateHTMLFiles = async (businessInfo, services, areas, config, aiService) => {
         // Generate enhanced content using AI
         const contentPrompt = `Generate professional, SEO-optimized content for a ${businessInfo.niche} business called "${businessInfo.name}" in ${businessInfo.city}. 
@@ -323,7 +313,7 @@ Services: ${businessInfo.services?.map(s => s.name).join(', ') || 'Various servi
 
 Respond in JSON format with keys: description, local_benefits, coverage_details`;
 
-let areaContent;
+          let areaContent;
           try {
             const aiResponse = await aiService.generateContent(areaPrompt);
             areaContent = JSON.parse(aiResponse);
@@ -1100,7 +1090,16 @@ Generated on: ${new Date().toISOString()}`;
 </IfModule>`;
       };
 
-      return zipBlob;
+    }, []);
+
+    return {
+      generateWebsite,
+      isGenerating,
+      error
+    };
+  }
+
+  export default useWebsiteGenerator;
     } catch (error) {
       console.error("Website generation failed:", error);
       throw error;
@@ -1111,5 +1110,3 @@ Generated on: ${new Date().toISOString()}`;
     generateWebsite
   };
 };
-
-export default useWebsiteGenerator;
