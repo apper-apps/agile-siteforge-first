@@ -164,8 +164,8 @@ const useWebsiteGenerator = () => {
 
       // Step 3: Generate service pages
       if (config.pageType === "multi" && services.length > 0) {
-        updateProgress(generationSteps[currentStep++]);
-        const serviceFiles = await generateServicePages(businessInfo, services, config, aiService);
+updateProgress(generationSteps[currentStep++]);
+        serviceFiles = await generateServicePages(businessInfo, services, config, aiService);
         updateProgress(generationSteps[currentStep], serviceFiles);
       } else {
         currentStep++;
@@ -173,8 +173,8 @@ const useWebsiteGenerator = () => {
 
       // Step 4: Generate area pages
       if (config.pageType === "multi" && areas.length > 0) {
-        updateProgress(generationSteps[currentStep++]);
-        const areaFiles = await generateAreaPages(businessInfo, areas, config, aiService);
+updateProgress(generationSteps[currentStep++]);
+        areaFiles = await generateAreaPages(businessInfo, areas, config, aiService);
         updateProgress(generationSteps[currentStep], areaFiles);
       } else {
         currentStep++;
@@ -192,7 +192,7 @@ const useWebsiteGenerator = () => {
       updateProgress(generationSteps[currentStep], assetFiles);
       currentStep++;
 
-      // Step 7: Create ZIP package
+// Step 7: Create ZIP package
       updateProgress(generationSteps[currentStep++]);
       const allFiles = [...htmlFiles, ...(serviceFiles || []), ...(areaFiles || []), ...seoFiles, ...assetFiles];
       const zipBlob = await createZipPackage(allFiles);

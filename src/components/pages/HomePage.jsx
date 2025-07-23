@@ -108,7 +108,6 @@ const HomePage = () => {
     }
   };
 
-  const handlePrevious = () => {
 const handlePrevious = () => {
     setCurrentStep(prev => Math.max(prev - 1, 0));
   };
