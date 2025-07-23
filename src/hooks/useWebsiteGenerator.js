@@ -323,10 +323,10 @@ Services: ${businessInfo.services?.map(s => s.name).join(', ') || 'Various servi
 
 Respond in JSON format with keys: description, local_benefits, coverage_details`;
 
-          let areaContent;
+let areaContent;
           try {
             const aiResponse = await aiService.generateContent(areaPrompt);
-            areaContent = JSON.parse(areaContent);
+            areaContent = JSON.parse(aiResponse);
           } catch (error) {
             console.warn(`AI content generation failed for area ${area.name}, using fallback:`, error);
             areaContent = {
