@@ -135,77 +135,10 @@ class AIService {
   }
 }
 
-const useWebsiteGenerator = () => {
-  const generateWebsite = useCallback(async ({ businessInfo, services, areas, config, onProgress }) => {
-    try {
-      const aiService = new AIService(config);
-      const generationSteps = [
-        "Initializing AI content generation...",
-        "Generating homepage content...",
-        "Creating service pages...",
-        "Building area pages...",
-        "Generating sitemap and SEO files...",
-        "Compiling assets and scripts...",
-        "Creating downloadable package..."
-};
-
-    const generateWebsite = useCallback(async (businessInfo, services, areas, config, onProgress) => {
-      try {
-        setIsGenerating(true);
-        setError(null);
-
-        onProgress(0, "Initializing AI content generation...");
-        
-        // Initialize AI service
-        const aiService = new AIService(config.aiProvider, config.apiKey);
-        
-        // Step 2: Generate main HTML files
-        onProgress(20, "Generating homepage content...");
-        const htmlFiles = await generateHTMLFiles(businessInfo, services, areas, config, aiService);
-        
-        // Step 3: Generate service pages (if multi-page)
-        let serviceFiles = [];
-        if (config.pageType === 'multi' && services.length > 0) {
-          onProgress(40, "Creating service pages...");
-          serviceFiles = await generateServicePages(businessInfo, services, config, aiService);
-        }
-        
-        // Step 4: Generate area pages (if multi-page and areas exist)
-        let areaFiles = [];
-        if (config.pageType === 'multi' && areas.length > 0) {
-          onProgress(60, "Creating service area pages...");
-          areaFiles = await generateAreaPages(businessInfo, areas, config, aiService);
-        }
-        
-        // Step 5: Generate asset files
-        onProgress(80, "Adding styles and scripts...");
-        const assetFiles = await generateAssetFiles(config);
-        
-        // Step 6: Generate SEO files
-        onProgress(90, "Optimizing for search engines...");
-        const seoFiles = await generateSEOFiles(businessInfo, services, areas);
-        
-        // Step 7: Create ZIP package
-        onProgress(95, "Packaging website files...");
-        const allFiles = [...htmlFiles, ...serviceFiles, ...areaFiles, ...assetFiles, ...seoFiles];
-        const zipBlob = await createZipPackage(allFiles);
-        
-        onProgress(100, "Website generated successfully!");
-        
-        setIsGenerating(false);
-        return zipBlob;
-        
-      } catch (error) {
-        console.error("Website generation failed:", error);
-        setError(error.message || 'Website generation failed');
-        setIsGenerating(false);
-        throw error;
-      }
-
-      // Helper functions for website generation
-      const generateHTMLFiles = async (businessInfo, services, areas, config, aiService) => {
-        // Generate enhanced content using AI
-        const contentPrompt = `Generate professional, SEO-optimized content for a ${businessInfo.niche} business called "${businessInfo.name}" in ${businessInfo.city}. 
+// Helper functions for website generation (moved outside hook)
+const generateHTMLFiles = async (businessInfo, services, areas, config, aiService) => {
+  // Generate enhanced content using AI
+  const contentPrompt = `Generate professional, SEO-optimized content for a ${businessInfo.niche} business called "${businessInfo.name}" in ${businessInfo.city}. 
 
 Business details:
 - Company: ${businessInfo.company}
@@ -222,40 +155,40 @@ Generate:
 
 Respond in JSON format with keys: hero_headline, business_description, benefits, cta_variations`;
 
-        let enhancedContent;
-        try {
-          const aiResponse = await aiService.generateContent(contentPrompt);
-          enhancedContent = JSON.parse(aiResponse);
-        } catch (error) {
-          console.warn("AI content generation failed, using fallback content:", error);
-          enhancedContent = {
-            hero_headline: `Professional ${businessInfo.niche} Services`,
-            business_description: businessInfo.description,
-            benefits: [
-              { title: "Quality Work", description: `Professional ${businessInfo.niche.toLowerCase()} services` },
-              { title: "Expert Team", description: "Experienced professionals" },
-              { title: "Timely Service", description: "On-time project completion" }
-            ],
-            cta_variations: ["Get Free Quote", "Call Now", "Contact Us"]
-          };
-        }
+  let enhancedContent;
+  try {
+    const aiResponse = await aiService.generateContent(contentPrompt);
+    enhancedContent = JSON.parse(aiResponse);
+  } catch (error) {
+    console.warn("AI content generation failed, using fallback content:", error);
+    enhancedContent = {
+      hero_headline: `Professional ${businessInfo.niche} Services`,
+      business_description: businessInfo.description,
+      benefits: [
+        { title: "Quality Work", description: `Professional ${businessInfo.niche.toLowerCase()} services` },
+        { title: "Expert Team", description: "Experienced professionals" },
+        { title: "Timely Service", description: "On-time project completion" }
+      ],
+      cta_variations: ["Get Free Quote", "Call Now", "Contact Us"]
+    };
+  }
 
-        const files = [
-          {
-            name: "index.html",
-            content: generateIndexHTML(businessInfo, services, areas, config, enhancedContent),
-            type: "html"
-          }
-        ];
+  const files = [
+    {
+      name: "index.html",
+      content: generateIndexHTML(businessInfo, services, areas, config, enhancedContent),
+      type: "html"
+    }
+  ];
 
-        return files;
-      };
+  return files;
+};
 
-      const generateServicePages = async (businessInfo, services, config, aiService) => {
-        const serviceFiles = [];
-        
-        for (const service of services) {
-          const servicePrompt = `Generate detailed, SEO-optimized content for a ${service.name} service page for ${businessInfo.name} in ${businessInfo.city}.
+const generateServicePages = async (businessInfo, services, config, aiService) => {
+  const serviceFiles = [];
+  
+  for (const service of services) {
+    const servicePrompt = `Generate detailed, SEO-optimized content for a ${service.name} service page for ${businessInfo.name} in ${businessInfo.city}.
 
 Include:
 1. Service description (2-3 paragraphs)
@@ -268,39 +201,39 @@ Target keywords: ${businessInfo.keywords}
 
 Respond in JSON format with keys: description, features, process, faqs`;
 
-          let serviceContent;
-          try {
-            const aiResponse = await aiService.generateContent(servicePrompt);
-            serviceContent = JSON.parse(aiResponse);
-          } catch (error) {
-            console.warn(`AI content generation failed for service ${service.name}, using fallback:`, error);
-            serviceContent = {
-              description: `Professional ${service.name.toLowerCase()} services in ${businessInfo.city} and surrounding areas. Our experienced team delivers quality results for all your ${service.name.toLowerCase()} needs.`,
-              features: [`Expert ${service.name} professionals`, "Quality guaranteed", "Competitive pricing", "Timely completion"],
-              process: ["Initial consultation", "Project planning", "Expert execution", "Final inspection"],
-              faqs: [
-                { question: `What does your ${service.name} service include?`, answer: `Our ${service.name} service includes comprehensive solutions tailored to your needs.` },
-                { question: "How long does the process take?", answer: "Timeline varies based on project scope, but we always work efficiently." },
-                { question: "Do you provide warranties?", answer: "Yes, we stand behind our work with appropriate warranties." }
-              ]
-            };
-          }
-
-          serviceFiles.push({
-            name: `services/${service.slug}.html`,
-            content: generateServiceHTML(service, businessInfo, config, serviceContent),
-            type: "html"
-          });
-        }
-
-        return serviceFiles;
+    let serviceContent;
+    try {
+      const aiResponse = await aiService.generateContent(servicePrompt);
+      serviceContent = JSON.parse(aiResponse);
+    } catch (error) {
+      console.warn(`AI content generation failed for service ${service.name}, using fallback:`, error);
+      serviceContent = {
+        description: `Professional ${service.name.toLowerCase()} services in ${businessInfo.city} and surrounding areas. Our experienced team delivers quality results for all your ${service.name.toLowerCase()} needs.`,
+        features: [`Expert ${service.name} professionals`, "Quality guaranteed", "Competitive pricing", "Timely completion"],
+        process: ["Initial consultation", "Project planning", "Expert execution", "Final inspection"],
+        faqs: [
+          { question: `What does your ${service.name} service include?`, answer: `Our ${service.name} service includes comprehensive solutions tailored to your needs.` },
+          { question: "How long does the process take?", answer: "Timeline varies based on project scope, but we always work efficiently." },
+          { question: "Do you provide warranties?", answer: "Yes, we stand behind our work with appropriate warranties." }
+        ]
       };
+    }
 
-      const generateAreaPages = async (businessInfo, areas, config, aiService) => {
-        const areaFiles = [];
-        
-        for (const area of areas) {
-          const areaPrompt = `Generate location-specific content for ${businessInfo.niche} services in ${area.name} for ${businessInfo.name}.
+    serviceFiles.push({
+      name: `services/${service.slug}.html`,
+      content: generateServiceHTML(service, businessInfo, config, serviceContent),
+      type: "html"
+    });
+  }
+
+  return serviceFiles;
+};
+
+const generateAreaPages = async (businessInfo, areas, config, aiService) => {
+  const areaFiles = [];
+  
+  for (const area of areas) {
+    const areaPrompt = `Generate location-specific content for ${businessInfo.niche} services in ${area.name} for ${businessInfo.name}.
 
 Include:
 1. Location-specific description mentioning ${area.name}
@@ -313,98 +246,98 @@ Services: ${businessInfo.services?.map(s => s.name).join(', ') || 'Various servi
 
 Respond in JSON format with keys: description, local_benefits, coverage_details`;
 
-          let areaContent;
-          try {
-            const aiResponse = await aiService.generateContent(areaPrompt);
-            areaContent = JSON.parse(aiResponse);
-          } catch (error) {
-            console.warn(`AI content generation failed for area ${area.name}, using fallback:`, error);
-            areaContent = {
-              description: `Professional ${businessInfo.niche.toLowerCase()} services in ${area.name}. We're proud to serve the ${area.name} community with reliable, high-quality services.`,
-              local_benefits: [`Local ${area.name} expertise`, "Fast response times", "Community-focused service", "Local knowledge advantage"],
-              coverage_details: `We provide comprehensive ${businessInfo.niche.toLowerCase()} services throughout ${area.name} and surrounding neighborhoods.`
-            };
-          }
-
-          areaFiles.push({
-            name: `${businessInfo.areaPageSlug || "service-areas"}/${area.slug}.html`,
-            content: generateAreaHTML(area, businessInfo, config, areaContent),
-            type: "html"
-          });
-        }
-
-        return areaFiles;
+    let areaContent;
+    try {
+      const aiResponse = await aiService.generateContent(areaPrompt);
+      areaContent = JSON.parse(aiResponse);
+    } catch (error) {
+      console.warn(`AI content generation failed for area ${area.name}, using fallback:`, error);
+      areaContent = {
+        description: `Professional ${businessInfo.niche.toLowerCase()} services in ${area.name}. We're proud to serve the ${area.name} community with reliable, high-quality services.`,
+        local_benefits: [`Local ${area.name} expertise`, "Fast response times", "Community-focused service", "Local knowledge advantage"],
+        coverage_details: `We provide comprehensive ${businessInfo.niche.toLowerCase()} services throughout ${area.name} and surrounding neighborhoods.`
       };
+    }
 
-      const generateAssetFiles = async (config) => {
-        return [
-          {
-            name: "main.js",
-            content: generateMainJS(),
-            type: "js"
-          },
-          {
-            name: "custom.css",
-            content: generateCustomCSS(config.colors),
-            type: "css"
-          },
-          {
-            name: ".htaccess",
-            content: generateHtaccess(),
-            type: "txt"
-          }
-        ];
-      };
+    areaFiles.push({
+      name: `${businessInfo.areaPageSlug || "service-areas"}/${area.slug}.html`,
+      content: generateAreaHTML(area, businessInfo, config, areaContent),
+      type: "html"
+    });
+  }
 
-      const generateSEOFiles = async (businessInfo, services, areas) => {
-        return [
-          {
-            name: "sitemap.xml",
-            content: generateSitemap(businessInfo, services, areas),
-            type: "xml"
-          },
-          {
-            name: "robots.txt",
-            content: generateRobotsTxt(businessInfo),
-            type: "txt"
-          },
-          {
-            name: "llm.txt",
-            content: generateLLMTxt(businessInfo),
-            type: "txt"
-          }
-        ];
-      };
+  return areaFiles;
+};
 
-      const createZipPackage = async (files) => {
-        const JSZip = (await import('jszip')).default;
-        const zip = new JSZip();
-        
-        files.forEach(file => {
-          const pathParts = file.name.split('/');
-          if (pathParts.length > 1) {
-            let currentFolder = zip;
-            for (let i = 0; i < pathParts.length - 1; i++) {
-              currentFolder = currentFolder.folder(pathParts[i]);
-            }
-            currentFolder.file(pathParts[pathParts.length - 1], file.content);
-          } else {
-            zip.file(file.name, file.content);
-          }
-        });
-        
-        return await zip.generateAsync({ 
-          type: "blob",
-          compression: "DEFLATE",
-          compressionOptions: { level: 6 }
-        });
-      };
+const generateAssetFiles = async (config) => {
+  return [
+    {
+      name: "main.js",
+      content: generateMainJS(),
+      type: "js"
+    },
+    {
+      name: "custom.css",
+      content: generateCustomCSS(config.colors),
+      type: "css"
+    },
+    {
+      name: ".htaccess",
+      content: generateHtaccess(),
+      type: "txt"
+    }
+  ];
+};
 
-      // Enhanced HTML generators with AI-enhanced content
-      const generateIndexHTML = (businessInfo, services, areas, config, enhancedContent) => {
-        const keywords = businessInfo.keywords.split(',').map(k => k.trim()).join(', ');
-        
-        return `<!DOCTYPE html>
+const generateSEOFiles = async (businessInfo, services, areas) => {
+  return [
+    {
+      name: "sitemap.xml",
+      content: generateSitemap(businessInfo, services, areas),
+      type: "xml"
+    },
+    {
+      name: "robots.txt",
+      content: generateRobotsTxt(businessInfo),
+      type: "txt"
+    },
+    {
+      name: "llm.txt",
+      content: generateLLMTxt(businessInfo),
+      type: "txt"
+    }
+  ];
+};
+
+const createZipPackage = async (files) => {
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+  
+  files.forEach(file => {
+    const pathParts = file.name.split('/');
+    if (pathParts.length > 1) {
+      let currentFolder = zip;
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        currentFolder = currentFolder.folder(pathParts[i]);
+      }
+      currentFolder.file(pathParts[pathParts.length - 1], file.content);
+    } else {
+      zip.file(file.name, file.content);
+    }
+  });
+  
+  return await zip.generateAsync({ 
+    type: "blob",
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 }
+  });
+};
+
+// Enhanced HTML generators with AI-enhanced content
+const generateIndexHTML = (businessInfo, services, areas, config, enhancedContent) => {
+  const keywords = businessInfo.keywords.split(',').map(k => k.trim()).join(', ');
+  
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -655,10 +588,10 @@ Respond in JSON format with keys: description, local_benefits, coverage_details`
     <script src="main.js"></script>
 </body>
 </html>`;
-      };
+};
 
-      const generateServiceHTML = (service, businessInfo, config, serviceContent) => {
-        return `<!DOCTYPE html>
+const generateServiceHTML = (service, businessInfo, config, serviceContent) => {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -723,10 +656,10 @@ Respond in JSON format with keys: description, local_benefits, coverage_details`
     </main>
 </body>
 </html>`;
-      };
+};
 
-      const generateAreaHTML = (area, businessInfo, config, areaContent) => {
-        return `<!DOCTYPE html>
+const generateAreaHTML = (area, businessInfo, config, areaContent) => {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -779,10 +712,10 @@ Respond in JSON format with keys: description, local_benefits, coverage_details`
     </main>
 </body>
 </html>`;
-      };
+};
 
-      const generateMainJS = () => {
-        return `// Main JavaScript file - Enhanced functionality
+const generateMainJS = () => {
+  return `// Main JavaScript file - Enhanced functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -853,10 +786,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });`;
-      };
+};
 
-      const generateCustomCSS = (colors) => {
-        return `/* Enhanced Custom CSS with Responsive Design */
+const generateCustomCSS = (colors) => {
+  return `/* Enhanced Custom CSS with Responsive Design */
 :root {
     --primary-color: ${colors.primary};
     --secondary-color: ${colors.secondary};
@@ -1009,13 +942,13 @@ body {
         padding-right: 1rem;
     }
 }`;
-      };
+};
 
-      const generateSitemap = (businessInfo, services, areas) => {
-        const baseUrl = `https://${businessInfo.websiteSlug}.netlify.app`;
-        const now = new Date().toISOString().split('T')[0];
-        
-        return `<?xml version="1.0" encoding="UTF-8"?>
+const generateSitemap = (businessInfo, services, areas) => {
+  const baseUrl = `https://${businessInfo.websiteSlug}.netlify.app`;
+  const now = new Date().toISOString().split('T')[0];
+  
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>${baseUrl}/</loc>
@@ -1038,18 +971,18 @@ body {
         <priority>0.7</priority>
     </url>`).join("")}
 </urlset>`;
-      };
+};
 
-      const generateRobotsTxt = (businessInfo) => {
-        return `User-agent: *
+const generateRobotsTxt = (businessInfo) => {
+  return `User-agent: *
 Allow: /
 Disallow: /admin/
 
 Sitemap: https://${businessInfo.websiteSlug}.netlify.app/sitemap.xml`;
-      };
+};
 
-      const generateLLMTxt = (businessInfo) => {
-        return `# ${businessInfo.name} - AI Generated Website
+const generateLLMTxt = (businessInfo) => {
+  return `# ${businessInfo.name} - AI Generated Website
 
 This website was generated by SiteForge Pro using AI technology.
 
@@ -1068,10 +1001,10 @@ ${businessInfo.description}
 ${businessInfo.keywords}
 
 Generated on: ${new Date().toISOString()}`;
-      };
+};
 
-      const generateHtaccess = () => {
-        return `# Enable compression
+const generateHtaccess = () => {
+  return `# Enable compression
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/plain
     AddOutputFilterByType DEFLATE text/html
@@ -1088,25 +1021,71 @@ Generated on: ${new Date().toISOString()}`;
     ExpiresByType image/jpg "access plus 1 month"
     ExpiresByType image/jpeg "access plus 1 month"
 </IfModule>`;
-      };
+};
 
-    }, []);
+const useWebsiteGenerator = () => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState(null);
 
-    return {
-      generateWebsite,
-      isGenerating,
-      error
-    };
-  }
+  const generateWebsite = useCallback(async ({ businessInfo, services, areas, config, onProgress }) => {
+    try {
+      setIsGenerating(true);
+      setError(null);
 
-  export default useWebsiteGenerator;
+      onProgress(0, "Initializing AI content generation...");
+      
+      // Initialize AI service
+      const aiService = new AIService(config);
+      
+      // Step 2: Generate main HTML files
+      onProgress(20, "Generating homepage content...");
+      const htmlFiles = await generateHTMLFiles(businessInfo, services, areas, config, aiService);
+      
+      // Step 3: Generate service pages (if multi-page)
+      let serviceFiles = [];
+      if (config.pageType === 'multi' && services.length > 0) {
+        onProgress(40, "Creating service pages...");
+        serviceFiles = await generateServicePages(businessInfo, services, config, aiService);
+      }
+      
+      // Step 4: Generate area pages (if multi-page and areas exist)
+      let areaFiles = [];
+      if (config.pageType === 'multi' && areas.length > 0) {
+        onProgress(60, "Creating service area pages...");
+        areaFiles = await generateAreaPages(businessInfo, areas, config, aiService);
+      }
+      
+      // Step 5: Generate asset files
+      onProgress(80, "Adding styles and scripts...");
+      const assetFiles = await generateAssetFiles(config);
+      
+      // Step 6: Generate SEO files
+      onProgress(90, "Optimizing for search engines...");
+      const seoFiles = await generateSEOFiles(businessInfo, services, areas);
+      
+      // Step 7: Create ZIP package
+      onProgress(95, "Packaging website files...");
+      const allFiles = [...htmlFiles, ...serviceFiles, ...areaFiles, ...assetFiles, ...seoFiles];
+      const zipBlob = await createZipPackage(allFiles);
+      
+      onProgress(100, "Website generated successfully!");
+      
+      setIsGenerating(false);
+      return zipBlob;
+      
     } catch (error) {
       console.error("Website generation failed:", error);
+      setError(error.message || 'Website generation failed');
+      setIsGenerating(false);
       throw error;
     }
   }, []);
 
   return {
-    generateWebsite
+    generateWebsite,
+    isGenerating,
+    error
   };
 };
+
+export default useWebsiteGenerator;
